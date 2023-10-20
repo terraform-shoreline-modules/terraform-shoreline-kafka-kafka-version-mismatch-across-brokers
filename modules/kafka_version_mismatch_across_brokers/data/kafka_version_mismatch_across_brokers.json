@@ -1,0 +1,130 @@
+{
+  "name": "kafka_version_mismatch_across_brokers",
+  "description": "This incident type refers to a situation where the different brokers in a Kafka cluster are running different versions of the software. This can lead to compatibility issues and potentially cause failures in the overall system. It is important to ensure that all brokers are running the same version of Kafka to avoid any version mismatch related incidents.",
+  "params": [
+    {
+      "name": "CONTROLLER_BROKER",
+      "value": ""
+    },
+    {
+      "name": "BROKER_LIST",
+      "value": ""
+    },
+    {
+      "name": "ANY_TOPIC",
+      "value": ""
+    },
+    {
+      "name": "TARGET_VERSION",
+      "value": ""
+    },
+    {
+      "name": "BROKER_HOST",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Kafka Version Mismatch Across Brokers.\nThis incident type refers to a situation where the different brokers in a Kafka cluster are running different versions of the software. This can lead to compatibility issues and potentially cause failures in the overall system. It is important to ensure that all brokers are running the same version of Kafka to avoid any version mismatch related incidents."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Connect to the cluster and list all brokers"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `kafka-topics.sh --bootstrap-server ${BROKER_LIST} --list`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the version of Kafka running on each broker"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `kafka-broker-api-versions.sh --bootstrap-server ${BROKER_LIST}`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Compare the version of Kafka running on each broker"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `kafka-broker-api-versions.sh --bootstrap-server ${BROKER_LIST} | grep version`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if there are any incompatible API versions between brokers"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `kafka-broker-api-versions.sh --bootstrap-server ${BROKER_LIST} | grep -i incompatible`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the version of Kafka running on the controller"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `kafka-topics.sh --bootstrap-server ${CONTROLLER_BROKER} --describe --topic ${ANY_TOPIC}`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if the controller is up-to-date with the version of Kafka running on the brokers"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `kafka-broker-api-versions.sh --bootstrap-server ${CONTROLLER_BROKER} | grep -i version`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Upgrade the broker(s) running the older version of Kafka to the target version."
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_upgrade_kafka($TARGET_VERSION, $BROKER_HOST)"
+    }
+  ]
+}
